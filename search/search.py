@@ -71,7 +71,7 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem):
     """
@@ -88,40 +88,15 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-
-    fringe = util.Stack()
-    l = problem.getSuccessors(problem.getStartState())
-
-    visited = set()
-    visited.add(problem.getStartState())
-
-    for i in l:
-        if i[0] not in visited:
-            fringe.push([i[0], [i[1]], i[2]])
-
-    while not fringe.isEmpty():
-        curr = fringe.pop()
-        visited.add(curr[0])
-
-        if problem.isGoalState(curr[0]):
-            return curr[1]
-
-        else:
-            successors = problem.getSuccessors(curr[0])
-            for i in successors:
-                if i[0] not in visited:
-                    temp = (i[0], curr[1] + [i[1]], curr[2]+1)
-                    fringe.push(temp)
+    return genSearch(problem, util.Stack())
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return genSearch(problem, util.Queue())
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return genSearch(problem, util.PriorityQueue())
 
 def nullHeuristic(state, problem=None):
     """
@@ -132,9 +107,35 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return genSearch(problem, util.PriorityQueue(), heuristic)
 
+def genSearch(problem, fringe, heuristic=nullHeuristic):
+
+    if isinstance(fringe, util.Queue) or isinstance(fringe, util.Stack):
+        fringe.push([problem.getStartState(), [], 0])
+    elif isinstance(fringe, util.PriorityQueue):
+        f = heuristic(problem.getStartState(), problem)
+        fringe.push([problem.getStartState(), [], 0], f)
+
+    visited = []
+
+    while not fringe.isEmpty():
+        curr = fringe.pop()
+
+        if curr[0] not in visited:
+            visited.append(curr[0])
+            if problem.isGoalState(curr[0]):
+                return curr[1]
+            else:
+                successors = problem.getSuccessors(curr[0])
+                for i in successors:
+                    if isinstance(fringe, util.Queue) or isinstance(fringe, util.Stack):
+                        temp = [i[0], curr[1] + [i[1]], curr[2] + i[2]]
+                        fringe.push(temp)
+                    elif isinstance(fringe, util.PriorityQueue):
+                        forwardCost = heuristic(i[0], problem)
+                        temp = [i[0], curr[1] + [i[1]], curr[2] + i[2]]
+                        fringe.push(temp, temp[2] + forwardCost)
 
 # Abbreviations
 bfs = breadthFirstSearch
