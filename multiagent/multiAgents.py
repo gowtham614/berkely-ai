@@ -14,7 +14,7 @@
 
 from util import manhattanDistance
 from game import Directions
-import random, util
+import random, util, math
 
 from game import Agent
 
@@ -127,6 +127,50 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
     """
+    def getMaxvalue(self, state, idx, depth):
+        v = float('-inf'), ""
+
+        if not state.getLegalActions(idx):
+            return self.evaluationFunction(state), ""
+
+        for action in state.getLegalActions(idx):
+            successor = state.generateSuccessor(idx, action)
+            childVal = self.value(successor, (idx+1), depth)
+
+            if childVal[0] > v[0]:
+                v = (childVal[0], action)
+
+        return v
+
+    def getMinValue(self, state, idx, depth):
+        v = float('inf'), ""
+
+        if not state.getLegalActions(idx):
+            return self.evaluationFunction(state), ""
+
+        for action in state.getLegalActions(idx):
+            successor = state.generateSuccessor(idx, action)
+            childVal = self.value(successor, (idx + 1), depth)
+
+            if childVal[0] < v[0]:
+                v = (childVal[0], action)
+
+        return v
+
+    def value(self, state, idx, depth):
+
+        if idx == state.getNumAgents():
+            depth -= 1
+            idx = 0
+
+        if depth == 0:
+            return self.evaluationFunction(state), ""
+
+        if idx == 0:
+            return self.getMaxvalue(state, idx, depth)
+
+        else:
+            return self.getMinValue(state, idx, depth)
 
     def getAction(self, gameState):
         """
@@ -145,10 +189,18 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # print "depth", self.depth
+        # print "numAgent", gameState.getNumAgents()
+        # print "idx", self.index
+        # print "inf", float('inf')
+        # print gameState.getLegalActions(0)
+        return self.value(gameState, self.index, self.depth)[1]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
+
+
+
+
     """
       Your minimax agent with alpha-beta pruning (question 3)
     """
