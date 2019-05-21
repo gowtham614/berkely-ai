@@ -198,24 +198,117 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
 
-
-
-
     """
       Your minimax agent with alpha-beta pruning (question 3)
     """
+    def getMaxvalue(self, state, idx, depth, alphaBeta):
+        v = float('-inf'), ""
+
+        if not state.getLegalActions(idx):
+            return self.evaluationFunction(state), ""
+
+        for action in state.getLegalActions(idx):
+            successor = state.generateSuccessor(idx, action)
+            childVal = self.value(successor, (idx+1), depth, list(alphaBeta))
+
+            if childVal[0] > v[0]:
+                v = (childVal[0], action)
+
+            if v[0] > alphaBeta[1]:
+                alphaBeta[0] = max(v[0], alphaBeta[0])
+                return v
+            alphaBeta[0] = max(v[0], alphaBeta[0])
+
+        return v
+
+    def getMinValue(self, state, idx, depth, alphaBeta):
+        v = float('inf'), ""
+
+        if not state.getLegalActions(idx):
+            return self.evaluationFunction(state), ""
+
+        for action in state.getLegalActions(idx):
+            successor = state.generateSuccessor(idx, action)
+            childVal = self.value(successor, (idx + 1), depth, list(alphaBeta))
+
+            if childVal[0] < v[0]:
+                v = (childVal[0], action)
+
+            if v[0] < alphaBeta[0]:
+                alphaBeta[1] = min(v[0], alphaBeta[1])
+                return v
+            alphaBeta[1] = min(v[0], alphaBeta[1])
+
+        return v
+
+    def value(self, state, idx, depth, alphaBeta):
+
+        if idx == state.getNumAgents():
+            depth -= 1
+            idx = 0
+
+        if depth == 0:
+            return self.evaluationFunction(state), ""
+
+        if idx == 0:
+            return self.getMaxvalue(state, idx, depth, alphaBeta)
+
+        else:
+            return self.getMinValue(state, idx, depth, alphaBeta)
 
     def getAction(self, gameState):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        alphaBeta = [float('-inf'), float('inf')]
+        return self.value(gameState, self.index, self.depth, alphaBeta)[1]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
+    def getMaxvalue(self, state, idx, depth):
+        v = [float('-inf'), ""]
+
+        if not state.getLegalActions(idx):
+            return [self.evaluationFunction(state), ""]
+
+        for action in state.getLegalActions(idx):
+            successor = state.generateSuccessor(idx, action)
+            childVal = self.value(successor, (idx+1), depth)
+
+            if childVal[0] > v[0]:
+                v = (childVal[0], action)
+
+        return v
+
+    def getExpectedValue(self, state, idx, depth):
+        v = [0, ""]
+
+        if not state.getLegalActions(idx):
+            return [self.evaluationFunction(state), ""]
+
+        prob = 1.0/len(state.getLegalActions(idx))
+
+        for action in state.getLegalActions(idx):
+            successor = state.generateSuccessor(idx, action)
+            v[0] += prob * (self.value(successor, (idx + 1), depth)[0])
+
+        return v
+
+    def value(self, state, idx, depth):
+        if idx == state.getNumAgents():
+            depth -= 1
+            idx = 0
+
+        if depth == 0:
+            return [self.evaluationFunction(state), ""]
+
+        if idx == 0:
+            return self.getMaxvalue(state, idx, depth)
+
+        else:
+            return self.getExpectedValue(state, idx, depth)
 
     def getAction(self, gameState):
         """
@@ -224,8 +317,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.value(gameState, self.index, self.depth)[1]
 
 def betterEvaluationFunction(currentGameState):
     """
