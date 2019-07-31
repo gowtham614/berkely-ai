@@ -12,7 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-import util
+import util, operator
 from game import Agent
 from game import Directions
 from keyboardAgents import KeyboardAgent
@@ -162,5 +162,14 @@ class GreedyBustersAgent(BustersAgent):
         livingGhostPositionDistributions = \
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        pos = [max(belief.iteritems(), key=operator.itemgetter(1))[0]
+               for belief in livingGhostPositionDistributions]
+
+        tempPos = [(self.distancer.getDistance(pacmanPosition, p), p) for p in pos]
+        minDist, minPos = min(tempPos, key=operator.itemgetter(0))
+        actions = [ (self.distancer.getDistance(Actions.getSuccessor(pacmanPosition, action),
+                                                minPos), action) for action in legal]
+
+        return min(actions, key=operator.itemgetter(0))[1]
+
