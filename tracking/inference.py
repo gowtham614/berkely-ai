@@ -290,23 +290,24 @@ class ParticleFilter(InferenceModule):
         # print "numparticles", self.numParticles, "legalpos", len(self.legalPositions)
         if noisyDistance == None:
             self.particles = [self.getJailPosition()] * self.numParticles
+            return
 
+        selfBeliefs = self.getBeliefDistribution()
         belief = util.Counter()
         total = 0
-        for p in self.particles:
+        for p in self.legalPositions:
             trueDistance = util.manhattanDistance(p, pacmanPosition)
-            belief[p] += emissionModel[trueDistance]
+            belief[p] += emissionModel[trueDistance] * selfBeliefs[p]
             total += emissionModel[trueDistance]
 
         if total == 0:
             self.initialize(gameState)
             return
         else:
+
             particles = []
-            for key in belief:
-                belief[key] = belief[key] / total
-                print belief[key], total
-                particles += [key] * int(belief[key] * self.numParticles)
+            for counter in range(self.numParticles):
+                self.particles.append(util.sample(belief))
 
             self.particles = particles
 
@@ -336,12 +337,9 @@ class ParticleFilter(InferenceModule):
         """
         "*** YOUR CODE HERE ***"
         beliefs = util.Counter()
-        for pos in self.legalPositions:
-            count = 0
-            for particlePos in self.particles:
-                if pos == particlePos:
-                    count += 1
-            beliefs[pos] = count / self.numParticles
+
+        for pos in self.particles:
+            beliefs[pos] += 1.0 / self.numParticles
         return beliefs
 
 class MarginalInference(InferenceModule):
