@@ -234,6 +234,7 @@ class ParticleFilter(InferenceModule):
     def __init__(self, ghostAgent, numParticles=300):
         InferenceModule.__init__(self, ghostAgent);
         self.setNumParticles(numParticles)
+        self.particles = []
 
     def setNumParticles(self, numParticles):
         self.numParticles = numParticles
@@ -251,7 +252,10 @@ class ParticleFilter(InferenceModule):
         Storing your particles as a Counter (where there could be an associated
         weight with each position) is incorrect and may produce errors.
         """
-        "*** YOUR CODE HERE ***"
+
+        for i in range(self.numParticles):
+            self.particles.append(self.legalPositions[i%self.legalPositions.size()])
+
 
     def observe(self, observation, gameState):
         """
@@ -311,7 +315,13 @@ class ParticleFilter(InferenceModule):
         Counter object)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        beliefs = util.Counter()
+        for pos in self.legalPositions:
+            count = 0.0
+            for particle in self.particles:
+                if particle == pos:
+                    count += 1.0
+            self.beliefs[pos] = count / sel
 
 class MarginalInference(InferenceModule):
     """
