@@ -283,32 +283,28 @@ class ParticleFilter(InferenceModule):
         You may also want to use util.manhattanDistance to calculate the
         distance between a particle and Pacman's position.
         """
+
         noisyDistance = observation
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
-        "*** YOUR CODE HERE ***"
-        # print "numparticles", self.numParticles, "legalpos", len(self.legalPositions)
+
         if noisyDistance == None:
             self.particles = [self.getJailPosition()] * self.numParticles
             return
 
         selfBeliefs = self.getBeliefDistribution()
         belief = util.Counter()
-        total = 0
         for p in self.legalPositions:
             trueDistance = util.manhattanDistance(p, pacmanPosition)
-            belief[p] += emissionModel[trueDistance] * selfBeliefs[p]
-            total += emissionModel[trueDistance]
+            belief[p] = emissionModel[trueDistance] * selfBeliefs[p]
 
-        if total == 0:
-            self.initialize(gameState)
+        if not any(belief.values()):
+            self.initializeUniformly(gameState)
             return
         else:
-
             particles = []
             for counter in range(self.numParticles):
-                self.particles.append(util.sample(belief))
-
+                particles.append(util.sample(belief))
             self.particles = particles
 
     def elapseTime(self, gameState):
@@ -325,8 +321,11 @@ class ParticleFilter(InferenceModule):
         util.sample(Counter object) is a helper method to generate a sample from
         a belief distribution.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        particles = []
+        for oldPos in self.particles:
+            newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, oldPos))
+            particles.append(util.sample(newPosDist))
+        self.particles = particles
 
     def getBeliefDistribution(self):
         """
