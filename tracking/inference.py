@@ -411,7 +411,11 @@ class JointParticleFilter:
         Storing your particles as a Counter (where there could be an associated
         weight with each position) is incorrect and may produce errors.
         """
-        "*** YOUR CODE HERE ***"
+        self.particles = []
+        possibilities = list(itertools.permutations(self.legalPositions, self.numGhosts))
+        random.shuffle(possibilities)
+        for count in range(self.numParticles):
+            self.particles.append(possibilities[count % len(possibilities)])
 
     def addGhostAgent(self, agent):
         """
@@ -421,7 +425,7 @@ class JointParticleFilter:
         self.ghostAgents.append(agent)
 
     def getJailPosition(self, i):
-        return (2 * i + 1, 1);
+        return (2 * i + 1, 1)
 
     def observeState(self, gameState):
         """
@@ -458,7 +462,26 @@ class JointParticleFilter:
             return
         emissionModels = [busters.getObservationDistribution(dist) for dist in noisyDistances]
 
-        "*** YOUR CODE HERE ***"
+        belief = util.Counter()
+        for p in self.particles:
+            prob = 1.0
+            for i in range(self.numGhosts):
+                if noisyDistances[i] == None:
+                    p = self.getParticleWithGhostInJail(p, i)
+                else:
+                    trueDistance = util.manhattanDistance(p[i], pacmanPosition)
+                    prob *= emissionModels[i][trueDistance]
+            belief[p] += prob
+
+        if not any(belief.values()):
+            self.initializeParticles()
+            return
+        else:
+            belief.normalize()
+            particles = []
+            for counter in range(self.numParticles):
+                particles.append(util.sample(belief))
+            self.particles = particles
 
     def getParticleWithGhostInJail(self, particle, ghostIndex):
         """
@@ -526,7 +549,10 @@ class JointParticleFilter:
 
     def getBeliefDistribution(self):
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        beliefs = util.Counter()
+        for pos in self.particles:
+            beliefs[pos] += 1.0 / self.numParticles
+        return beliefs
 
 # One JointInference module is shared globally across instances of MarginalInference
 jointInference = JointParticleFilter()
